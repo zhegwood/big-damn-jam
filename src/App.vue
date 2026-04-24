@@ -51,7 +51,9 @@ const pickAndRemove = (
   exclude?: Set<string>,
 ): string | null => {
   if (available.length === 0) {
-    available.splice(0, available.length, ...original)
+    // When resetting, filter out items that are already selected
+    const validItems = original.filter((item) => !exclude || !exclude.has(item))
+    available.splice(0, available.length, ...validItems)
   }
   if (available.length === 0) {
     return null
@@ -64,8 +66,8 @@ const pickAndRemove = (
   }
 
   if (filtered.length === 0) {
-    // If all are excluded, reset and try again
-    filtered = available
+    // If all are excluded, return null instead of picking anyway
+    return null
   }
 
   const index = randomNumber(filtered.length)
@@ -143,6 +145,17 @@ const randomize = () => {
   if (guitar2_picked) {
     guitarPlayer2.value = guitar2_picked
     selectedPlayers.value.add(guitar2_picked)
+    // Special case: if Chris is guitarist2, exclude Paul from horns
+    if (guitar2_picked === 'Chris') {
+      selectedPlayers.value.add('Paul')
+      // If Paul was already picked as drummer, re-pick
+      if (drummer.value === 'Paul') {
+        drummer.value = pickAndRemove(availableDrums.value, drums.value, selectedPlayers.value)
+        if (drummer.value) {
+          selectedPlayers.value.add(drummer.value)
+        }
+      }
+    }
   }
 
   const bass_picked = pickAndRemove(availableBass.value, bass.value, selectedPlayers.value)
@@ -173,12 +186,12 @@ const randomize = () => {
   starter.value = pickAndRemove(availableInstruments.value, instruments.value)
   hasSecondGuitar.value = Boolean(hasFiftyPercent())
   hasPercussion.value = Boolean(hasFiftyPercent())
-  hasKeys.value = Boolean(hasThirtyPercent())
-  hasHorns.value = Boolean(hasFortyPercent())
+  hasKeys.value = Boolean(hasFiftyPercent())
+  hasHorns.value = Boolean(hasFiftyPercent())
 }
 
 const startCounter = () => {
-  seconds.value = 5
+  seconds.value = 3
   interval.value = setInterval(() => {
     if (seconds.value === 1) {
       randomize()
@@ -239,23 +252,23 @@ const startCounter = () => {
           v-else-if="guitarPlayer"
           class="p-4 text-center border border-orange-600 bg-orange-50 rounded-xl min-h-[326px]"
         >
-          <h1 class="mb-4 text-5xl">The Jam</h1>
+          <h1 class="mb-4 text-4xl">The Jam</h1>
           <div class="flex flex-row gap-8 mb-8 justify-self-center">
             <div>
-              <h2 class="mb-2 text-4xl">Guitar</h2>
-              <p class="text-2xl">{{ guitarPlayer }}</p>
+              <h2 class="mb-2 text-3xl">Guitar</h2>
+              <p class="text-xl">{{ guitarPlayer }}</p>
             </div>
             <div>
-              <h2 class="mb-2 text-4xl">Bass</h2>
-              <p class="text-2xl">{{ bassPlayer }}</p>
+              <h2 class="mb-2 text-3xl">Bass</h2>
+              <p class="text-xl">{{ bassPlayer }}</p>
             </div>
             <div>
-              <h2 class="mb-2 text-4xl">Drums</h2>
-              <p class="text-2xl">{{ drummer }}</p>
+              <h2 class="mb-2 text-3xl">Drums</h2>
+              <p class="text-xl">{{ drummer }}</p>
             </div>
             <div v-if="hasSecondGuitar">
-              <h2 class="mb-2 text-4xl">Guitar 2</h2>
-              <p class="text-2xl">{{ guitarPlayer2 }}</p>
+              <h2 class="mb-2 text-3xl">Guitar 2</h2>
+              <p class="text-xl">{{ guitarPlayer2 }}</p>
               <button
                 v-if="guitarPlayer === guitarPlayer2"
                 class="px-2 mt-2 border border-black rounded-lg"
@@ -266,8 +279,8 @@ const startCounter = () => {
               </button>
             </div>
             <div v-if="hasPercussion">
-              <h2 class="mb-2 text-4xl">Percussion</h2>
-              <p class="text-2xl">{{ percPlayer }}</p>
+              <h2 class="mb-2 text-3xl">Percussion</h2>
+              <p class="text-xl">{{ percPlayer }}</p>
               <button
                 v-if="drummer === percPlayer"
                 class="px-2 mt-2 border border-black rounded-lg"
@@ -278,17 +291,17 @@ const startCounter = () => {
               </button>
             </div>
             <div v-if="hasKeys">
-              <h2 class="mb-2 text-4xl">Keys</h2>
-              <p class="text-2xl">{{ keysPlayer }}</p>
+              <h2 class="mb-2 text-3xl">Keys</h2>
+              <p class="text-xl">{{ keysPlayer }}</p>
             </div>
             <div v-if="hasHorns">
-              <h2 class="mb-2 text-4xl">Sax</h2>
-              <p class="text-2xl">{{ hornPlayer }}</p>
+              <h2 class="mb-2 text-3xl">Horn/Harp</h2>
+              <p class="text-xl">{{ hornPlayer }}</p>
             </div>
           </div>
-          <!--<p class="mb-8 text-4xl">Key: {{ key }} {{ majMin }}</p>-->
-          <p class="mb-8 text-4xl">Key: {{ key }}</p>
-          <p class="text-4xl">Who Starts: {{ starter }}</p>
+          <!--<p class="mb-8 text-3xl">Key: {{ key }} {{ majMin }}</p>-->
+          <p class="mb-8 text-3xl">Key: {{ key }}</p>
+          <p class="text-3xl">Who Starts: {{ starter }}</p>
         </div>
       </div>
     </div>
